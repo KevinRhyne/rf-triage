@@ -10,7 +10,7 @@
   --over: #ff9e8f;
   --ok: #8ee6b0;
 
-  --bar-h: 28px;
+  --bar-h: 0px;
   --head-h: 112px;   /* shared top line for all three panes */
   --pad-x: 40px;
 }
@@ -512,3 +512,28 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .type-tile strong { font-size: 1.3rem; font-weight: 600; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
 .type-tile span { font-size: 0.68rem; font-weight: 600; color: var(--fg); }
 .composer-body .type-tile { align-self: start; }
+
+/* ---------- sign in ---------- */
+
+.layout.signed-out { display: block; }
+.signin { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.signin-form { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
+.signin-form .mark { font-size: 2.11rem; margin-bottom: 4px; }
+.signin-form h1 { font-size: 1.5rem; font-weight: 600; font-style: normal; margin-bottom: 18px; }
+.signin-form input {
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.95rem;
+}
+.signin-form input:focus { border-color: var(--color-border); background: rgba(255, 255, 255, 0.07); }
+.signin-form .btn-primary { margin-top: 10px; padding: 12px; }
+.signin-error { font-size: 0.85rem; color: #ffa597; }
+
+/* ---------- sidebar footer + client switch ---------- */
+
+.rail-foot { margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.8rem; color: var(--quiet); }
+.rail-foot .btn-quiet { font-size: 0.8rem; }
+.client-switch { padding: 0; border: none; background: none; cursor: pointer; font: inherit; color: inherit; max-width: 100%; }
+.client-switch:focus { outline: none; }

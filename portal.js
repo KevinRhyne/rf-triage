@@ -1,7 +1,7 @@
 // Portal: months rail and an item list whose cards expand in place.
 
 const P = Portal;
-let view = P.openMonths()[0].id; // a month id, 'backlog', or 'requests'
+let view = null; // a month id, 'backlog', or 'requests' (set once data loads)
 let openId = null;
 let composing = false;    // new-request card showing
 const triage = {};        // admin's type/points picks per pending request (not saved until accepted)
@@ -210,8 +210,10 @@ function rail() {
       <div class="brand">
         <span class="mark">R&amp;F</span>
         <span class="brand-text">
-          <span class="client">${P.esc(P.state.client.name)}</span>
-          <span class="product">Medium Retainer</span>
+          ${P.state.clients.length > 1
+            ? `<select class="client client-switch" data-client-switch>${P.state.clients.map((c) => `<option value="${c.id}" ${c.id === P.state.client.id ? 'selected' : ''}>${P.esc(c.name)}</option>`).join('')}</select>`
+            : `<span class="client">${P.esc(P.state.client.name)}</span>`}
+          <span class="product">${P.esc(P.state.client.plan)}</span>
         </span>
       </div>
       <div class="group first">
@@ -223,6 +225,10 @@ function rail() {
       <div class="group">
         ${folder('backlog', 'Backlog', P.state.backlog.length)}
         ${folder('requests', 'Requests', pending || '')}
+      </div>
+      <div class="rail-foot">
+        <span>${P.esc(P.state.user.name)}${P.isAdmin() ? ' · Admin' : ''}</span>
+        <button type="button" class="btn-quiet" data-act="sign-out">Sign out</button>
       </div>
     </div></nav>`;
 }
@@ -272,7 +278,30 @@ function list() {
     </section>`;
 }
 
+function signInScreen() {
+  return `
+    <div class="signin">
+      <form class="signin-form" data-form="sign-in">
+        <span class="mark">R&amp;F</span>
+        <h1>Triage</h1>
+        <input name="code" placeholder="Client code" autocomplete="username" autocapitalize="characters" required>
+        <input name="name" placeholder="Your name" autocomplete="name" value="${P.esc(P.savedName())}" required>
+        <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+        <button type="submit" class="btn-primary">Sign in</button>
+        <p class="signin-error" hidden></p>
+      </form>
+    </div>`;
+}
+
 function render() {
+  if (!P.ready) {
+    app.classList.add('signed-out');
+    app.innerHTML = signInScreen();
+    app.querySelector('[name="code"]')?.focus();
+    return;
+  }
+  app.classList.remove('signed-out');
+  if (!view || (view !== 'backlog' && view !== 'requests' && !P.month(view))) view = P.openMonths()[0]?.id || 'backlog';
   const scroll = app.querySelector('.list-pane')?.scrollTop || 0;
   app.innerHTML = rail() + list();
   const pane = app.querySelector('.list-pane');
@@ -318,6 +347,7 @@ const app = document.getElementById('app');
 function act(el) {
   const { act: a, id, val } = el.dataset;
   switch (a) {
+    case 'sign-out': openId = null; composing = false; view = null; return P.signOut();
     case 'compose': return setComposing(true);
     case 'cancel-compose': return setComposing(false);
     case 'type': return P.updateItem(id, { type: val });
@@ -416,9 +446,31 @@ app.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.matches('[data-edit="title"]')) { e.preventDefault(); e.target.blur(); }
 });
 
-app.addEventListener('submit', (e) => {
+app.addEventListener('change', (e) => {
+  const sel = e.target.closest('[data-client-switch]');
+  if (!sel) return;
+  openId = null; composing = false; view = null;
+  P.switchClient(sel.value);
+});
+
+app.addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target;
+  if (f.dataset.form === 'sign-in') {
+    const data = new FormData(f);
+    const err = f.querySelector('.signin-error');
+    const btn = f.querySelector('button');
+    btn.disabled = true;
+    err.hidden = true;
+    try {
+      await P.signIn(String(data.get('code')), String(data.get('name')), String(data.get('password')));
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.hidden = false;
+      btn.disabled = false;
+    }
+    return;
+  }
   if (f.dataset.form === 'new-item') {
     const data = new FormData(f);
     const points = Math.round(Number(data.get('points')));
@@ -453,29 +505,6 @@ document.addEventListener('keydown', (e) => {
   if (composing) return setComposing(false);
   if (openId) setOpen(null);
 });
-
-// Mockup-only: switch between the client's view and Kevin's.
-function mountRoleSwitch() {
-  const bar = document.querySelector('.p-bar');
-  const wrap = document.createElement('span');
-  wrap.className = 'p-switch';
-  const paint = () => {
-    const role = P.state.user.role;
-    wrap.innerHTML = `View as
-      <button type="button" data-role="client" class="${role === 'client' ? 'on' : ''}">Client</button>
-      <button type="button" data-role="admin" class="${role === 'admin' ? 'on' : ''}">Kevin</button>`;
-  };
-  wrap.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-role]');
-    if (!b) return;
-    openId = null;
-    composing = false;
-    P.setUser(b.dataset.role === 'admin' ? { name: 'Kevin', role: 'admin' } : { name: 'Dana', role: 'client' });
-    paint();
-  });
-  paint();
-  bar.insertBefore(wrap, bar.querySelector('.p-bar-spacer'));
-}
 
 // ---------- drag to reorder ----------
 // Pointer-based so we control the motion: the card lifts into a floating copy, its slot
@@ -629,6 +658,5 @@ window.addEventListener('click', (e) => {
 }, true);
 
 P.onChange(render);
-P.mountBar();
-mountRoleSwitch();
-render();
+app.innerHTML = '';
+P.init().finally(render);
