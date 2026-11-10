@@ -8,21 +8,34 @@ Where the design stands as of November 2026. `BRIEF.md` is the original starting
 python3 -m http.server 8123   # from the repo root
 ```
 
-Open http://localhost:8123/triage/. Data is fake and lives in the browser's localStorage. "Reset data" in the black mockup bar restores the sample data. "View as Client / Kevin" switches roles.
+Open http://localhost:8123/triage/. Local runs use the real Supabase data, so sign in the same way as on the live site.
 
 If changes don't show, hard refresh (Cmd+Shift+R). The simple server lets the browser cache JS and CSS.
+
+## Live
+
+- **URL:** https://triage.rhyneandfriends.com
+- **Hosting:** GitHub Pages on the public repo `KevinRhyne/rf-triage`, which holds only this folder. DNS is a Squarespace CNAME `triage` to `kevinrhyne.github.io`.
+- **Data:** Supabase project `iriaufhlhlkrafjltaxo`. Setup and adding clients: `supabase/SETUP.md`.
+- **Source of truth:** this `triage/` folder on the `triage` branch of rafsite. To deploy changes, commit here, then from the repo root:
+
+```sh
+git subtree push --prefix=triage rf-triage main
+```
+
+(`rf-triage` is the git remote for the deploy repo.)
 
 ## Files
 
 | File | What it holds |
 |---|---|
 | `index.html` | Page shell |
-| `data.js` | Config (capacity, contact), themes, sample data (`seedState`) |
+| `config.js` | Supabase URL, publishable key, hidden login email domain |
 | `core.js` | State, persistence, rules (`canMove`, capacity, locks), actions (move, comment, requests, admin edits). Exposes `window.Portal` |
 | `portal.js` | Rendering and interaction: sidebar, list, expandable cards, requests, drag to reorder |
 | `portal.css` | All styles. Tokens are in `variables.css` (a copy of the site tokens, so this folder deploys on its own) |
 
-Bump `STORE_KEY` in `core.js` whenever the saved data shape changes, so old saves don't break the page.
+Schema changes go in `supabase/schema.sql` (safe to re-run in the SQL editor).
 
 ## Design decisions so far
 
