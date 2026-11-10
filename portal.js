@@ -278,18 +278,21 @@ function list() {
     </section>`;
 }
 
+// ---------- sign in ----------
+
 function signInScreen() {
   return `
     <div class="signin">
-      <form class="signin-form" data-form="sign-in">
-        <span class="mark">R&amp;F</span>
-        <h1>Triage</h1>
-        <input name="code" placeholder="Client code" autocomplete="username" autocapitalize="characters" required>
-        <input name="name" placeholder="Your name" autocomplete="name" value="${P.esc(P.savedName())}" required>
-        <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
-        <button type="submit" class="btn-primary">Sign in</button>
-        <p class="signin-error" hidden></p>
-      </form>
+      <div class="signin-card">
+        <div class="signin-brand"><span class="mark">R&amp;F <span class="product-name">Triage</span></span></div>
+        <form class="signin-form" data-form="sign-in">
+          <input name="code" placeholder="Client code" autocomplete="username" autocapitalize="characters" required>
+          <input name="name" placeholder="Your name" autocomplete="name" value="${P.esc(P.savedName())}" required>
+          <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+          <button type="submit" class="btn-primary">Sign in</button>
+          <p class="signin-error" hidden></p>
+        </form>
+      </div>
     </div>`;
 }
 

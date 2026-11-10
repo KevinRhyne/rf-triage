@@ -518,8 +518,6 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .layout.signed-out { display: block; }
 .signin { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
 .signin-form { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
-.signin-form .mark { font-size: 2.11rem; margin-bottom: 4px; }
-.signin-form h1 { font-size: 1.5rem; font-weight: 600; font-style: normal; margin-bottom: 18px; }
 .signin-form input {
   padding: 12px 14px;
   border: 1px solid transparent;
@@ -528,7 +526,9 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   font-size: 0.95rem;
 }
 .signin-form input:focus { border-color: var(--color-border); background: rgba(255, 255, 255, 0.07); }
-.signin-form .btn-primary { margin-top: 10px; padding: 12px; }
+.signin-form .btn-primary { margin-top: 10px; padding: 12px; background: var(--color-accent); color: var(--color-primary); border-color: var(--color-accent); }
+.signin-form .btn-primary:hover { background: var(--color-accent-light); border-color: var(--color-accent-light); }
+.signin-form .btn-primary:disabled { opacity: 0.6; cursor: wait; }
 .signin-error { font-size: 0.85rem; color: #ffa597; }
 
 /* ---------- sidebar footer + client switch ---------- */
@@ -537,3 +537,11 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .rail-foot .btn-quiet { font-size: 0.8rem; }
 .client-switch { padding: 0; border: none; background: none; cursor: pointer; font: inherit; color: inherit; max-width: 100%; }
 .client-switch:focus { outline: none; }
+
+/* ---------- sign-in card: brand band on top, form below ---------- */
+
+.signin-card { width: 100%; max-width: 400px; border-radius: 22px; overflow: hidden; background: rgba(255, 255, 255, 0.03); }
+.signin-brand { display: flex; justify-content: center; padding: 30px 40px; background: rgba(118, 170, 255, 0.08); }
+.signin-brand .mark { font-size: 2.11rem; line-height: 1; }
+.signin-brand .product-name { font-weight: 600; margin-left: 0.12em; } /* lighter than the R&F mark (900) */
+.signin-card .signin-form { max-width: none; padding: 32px 40px 40px; }
