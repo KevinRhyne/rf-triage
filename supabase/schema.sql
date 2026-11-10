@@ -179,7 +179,7 @@ create trigger guard_request_update before update on public.requests
 create or replace function public.ensure_months(target_client uuid) returns void
 language plpgsql security definer set search_path = public as $$
 declare
-  first date := date_trunc('month', now() at time zone 'America/Los_Angeles')::date;
+  month_start date := date_trunc('month', now() at time zone 'America/Los_Angeles')::date;
   cap int;
 begin
   if not public.can_access(target_client) then
@@ -187,7 +187,7 @@ begin
   end if;
   select default_capacity into cap from clients where id = target_client;
   insert into months (client_id, starts_on, capacity)
-  select target_client, (first + (n || ' month')::interval)::date, cap
+  select target_client, (month_start + (n || ' month')::interval)::date, cap
   from generate_series(0, 2) as n
   on conflict (client_id, starts_on) do nothing;
 end $$;
