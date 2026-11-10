@@ -106,11 +106,22 @@ button { font: inherit; color: inherit; }
 .folder .name { display: inline-flex; align-items: center; gap: 6px; }
 .folder .num { font-size: 0.78rem; font-variant-numeric: tabular-nums; }
 .folder .track { display: block; height: 2px; margin-top: 9px; border-radius: 1px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
-.folder .track i { display: block; height: 100%; background: var(--color-accent); opacity: 0.4; }
+.folder .track i { display: block; height: 100%; background: var(--color-accent); opacity: 0.4; transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1); }
 .folder.active .track i { opacity: 0.7; }
 .folder.over .track i { background: var(--over); }
-.folder.p-can { background: rgba(118, 170, 255, 0.12); color: var(--color-text-primary); }
-.folder.p-cant { background: rgba(255, 158, 143, 0.08); }
+/* Drop targets while dragging a card */
+.folder.p-can, body.is-dragging .folder.p-can {
+  background: rgba(118, 170, 255, 0.2);
+  box-shadow: inset 0 0 0 1.5px var(--color-accent);
+  color: var(--color-text-primary);
+  transform: scale(1.03);
+}
+.folder.p-cant, body.is-dragging .folder.p-cant {
+  background: rgba(255, 110, 95, 0.12);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 140, 125, 0.7);
+  color: var(--color-text-primary);
+}
+.folder { transition: color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); }
 
 
 /* ---------- list ---------- */
@@ -124,12 +135,12 @@ button { font: inherit; color: inherit; }
   justify-content: space-between;
   gap: 16px;
 }
-.list-head h1 { font-size: 1.85rem; line-height: 1; font-weight: 600; font-style: normal; letter-spacing: -0.02em; color: rgba(255, 255, 255, 0.92); }
+.list-head h1 { font-size: 1.65rem; line-height: 1; font-weight: 600; font-style: normal; letter-spacing: -0.02em; color: rgba(255, 255, 255, 0.92); }
 .head-rule { height: 1px; background: var(--faint); margin-bottom: 30px; }
 
 /* Month pages: title sits where Backlog's does, capacity bar 16px below, then the same divider */
 .list-head.month {
-  --title-pad: calc((var(--head-h) - 16px - 1.85rem) / 2);
+  --title-pad: calc((var(--head-h) - 16px - 1.65rem) / 2);
   height: auto;
   flex-direction: column;
   align-items: stretch;
@@ -142,16 +153,16 @@ button { font: inherit; color: inherit; }
 
 .pb { --fill: var(--color-accent); font-variant-numeric: tabular-nums; }
 .pb.is-over { --fill: var(--over); }
-.pb-track { position: relative; height: 26px; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.08); }
+.pb-track { position: relative; height: 24px; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.08); }
 .pb-fill {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: 8px;
   background: rgba(118, 170, 255, 0.28);
-  transition: width var(--transition-base);
+  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1), background var(--transition-base);
 }
 .pb.is-over .pb-fill { background: rgba(255, 140, 125, 0.28); }
-.pb-label { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); font-size: 0.75rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+.pb-label { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); font-size: 0.72rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
 
 
 .cards { position: relative; display: flex; flex-direction: column; gap: 12px; min-height: 160px; border-radius: var(--radius-lg); }
@@ -163,7 +174,7 @@ button { font: inherit; color: inherit; }
   align-items: start;
   column-gap: 18px;
   row-gap: 0;
-  padding: 18px 24px 18px 14px;
+  padding: 16px 22px 16px 13px;
   background: var(--card);
   border: 1px solid var(--card-line);
   border-radius: var(--radius-lg);
@@ -176,10 +187,10 @@ button { font: inherit; color: inherit; }
 .p-card[data-movable="true"] { cursor: grab; }
 .p-card.open { cursor: default; }
 .p-expand { user-select: text; }
-.p-title { font-size: 1rem; line-height: 1.4; }
+.p-title { font-size: 0.94rem; line-height: 1.4; }
 .p-desc {
   margin-top: 6px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   line-height: 1.5;
   color: var(--quiet);
   display: -webkit-box;
@@ -187,7 +198,7 @@ button { font: inherit; color: inherit; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.p-shipped { margin-top: 6px; font-size: 0.75rem; color: var(--ok); }
+.p-shipped { margin-top: 6px; font-size: 0.72rem; color: var(--ok); }
 .p-card.shipped .p-title, .p-card.unsized .p-title { color: var(--quiet); }
 
 /* The open section sits in its own row, so the type tile stays put when a card expands */
@@ -215,16 +226,16 @@ button { font: inherit; color: inherit; }
 
 .comments { list-style: none; padding: 0; margin: 0 0 20px; display: flex; flex-direction: column; gap: 20px; }
 .c-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.c-head .who { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.92); }
-.c-head .when { font-size: 0.75rem; color: var(--quiet); white-space: nowrap; }
-.c-body p { margin-top: 2px; font-size: 0.92rem; line-height: 1.6; color: rgba(255, 255, 255, 0.78); }
+.c-head .who { font-size: 0.8rem; font-weight: 600; color: rgba(255, 255, 255, 0.92); }
+.c-head .when { font-size: 0.72rem; color: var(--quiet); white-space: nowrap; }
+.c-body p { margin-top: 2px; font-size: 0.86rem; line-height: 1.6; color: rgba(255, 255, 255, 0.78); }
 
 .c-form input {
   padding: 10px 14px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.04);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 .c-form input:focus { border-color: var(--color-border); background: rgba(255, 255, 255, 0.06); }
@@ -261,8 +272,9 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   background: #0d1a36;
   border-color: var(--color-border);
   box-shadow: 0 22px 48px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
-  transition: box-shadow 180ms ease;
+  transition: box-shadow 180ms ease, opacity 160ms ease;
 }
+.drag-ghost.near-rail { opacity: 0.3; }
 .drag-ghost.landing { box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
 .drag-ghost.drop-away { opacity: 0; scale: 0.92; transition: opacity 160ms ease, scale 160ms ease; }
 
@@ -326,7 +338,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 
 .seg-toggle { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: rgba(255, 255, 255, 0.04); }
 .seg-toggle button {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   min-width: 34px;
   padding: 5px 11px;
   border: none;
@@ -340,7 +352,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .seg-toggle button.on { background: rgba(255, 255, 255, 0.1); color: var(--color-text-primary); }
 
 .chip-btn {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   padding: 7px 12px;
   border-radius: 9px;
   border: none;
@@ -354,7 +366,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .actions { display: flex; align-items: center; gap: 16px; }
 .p-expand .actions { margin-top: 18px; }
 .btn-primary {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   padding: 9px 16px;
   border-radius: var(--radius-md);
@@ -366,9 +378,9 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 }
 .btn-primary:hover { background: var(--color-accent); color: var(--color-primary); }
 .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; background: transparent; color: var(--color-accent); }
-.btn-quiet { font-size: 0.85rem; padding: 0; border: none; background: none; color: var(--quiet); cursor: pointer; }
+.btn-quiet { font-size: 0.8rem; padding: 0; border: none; background: none; color: var(--quiet); cursor: pointer; }
 .btn-quiet:hover { color: var(--color-text-primary); }
-.hint { font-size: 0.8rem; color: var(--quiet); }
+.hint { font-size: 0.76rem; color: var(--quiet); }
 .p-expand .hint { margin-top: 18px; }
 
 
@@ -381,7 +393,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .p-card.open .p-author + .declined-note::before { content: ' · '; color: var(--quiet); }
 .p-from:not(:has(.declined-note)) { display: none; }
 .p-card.open .p-from { display: block; }
-.p-from { margin-top: 8px; font-size: 0.75rem; color: var(--quiet); opacity: 0.8; }
+.p-from { margin-top: 8px; font-size: 0.72rem; color: var(--quiet); opacity: 0.8; }
 .p-expand section.plain { margin-top: 0; padding-top: 18px; border-top: none; }
 .p-card.req.declined { opacity: 0.6; cursor: default; }
 
@@ -393,10 +405,10 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   justify-content: center;
   gap: 10px;
   width: 100%;
-  padding: 18px 24px;
+  padding: 16px 22px;
   border: none;
   background: none;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--color-accent);
   text-align: center;
   cursor: pointer;
@@ -413,7 +425,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: 18px;
-  padding: 18px 24px 18px 14px;
+  padding: 16px 22px 16px 13px;
 }
 
 .ghost-input {
@@ -424,12 +436,12 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   background: none;
   color: rgba(255, 255, 255, 0.82);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   line-height: 1.55;
   resize: none;
 }
 .ghost-input:focus { outline: none; }
-.ghost-input.title { font-size: 1rem; color: var(--color-text-primary); margin-bottom: 8px; }
+.ghost-input.title { font-size: 0.94rem; color: var(--color-text-primary); margin-bottom: 8px; }
 .composer .actions { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--faint); }
 
 /* Mockup role switch */
@@ -444,7 +456,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   padding: 0;
   border: none;
   background: none;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-align: right;
   color: var(--color-text-primary);
@@ -459,7 +471,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .btn-quiet:disabled { opacity: 0.35; cursor: default; color: var(--quiet); }
 
 .btn-sm {
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 600;
   padding: 7px 14px;
   border-radius: var(--radius-md);
@@ -503,14 +515,14 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 13px;
   background: var(--bg);
   line-height: 1;
 }
-.type-tile strong { font-size: 1.3rem; font-weight: 600; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
-.type-tile span { font-size: 0.68rem; font-weight: 600; color: var(--fg); }
+.type-tile strong { font-size: 1.2rem; font-weight: 600; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.type-tile span { font-size: 0.64rem; font-weight: 600; color: var(--fg); }
 .composer-body .type-tile { align-self: start; }
 
 /* ---------- sign in ---------- */
@@ -533,7 +545,8 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 
 /* ---------- sidebar footer + client switch ---------- */
 
-.rail-foot { margin-top: auto; padding-top: 24px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.8rem; color: var(--quiet); }
+.rail-bottom { margin-top: auto; padding-top: 24px; display: flex; flex-direction: column; gap: 18px; }
+.rail-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 0.8rem; color: var(--quiet); }
 .rail-foot .btn-quiet { font-size: 0.8rem; }
 .client-switch { padding: 0; border: none; background: none; cursor: pointer; font: inherit; color: inherit; max-width: 100%; }
 .client-switch:focus { outline: none; }
@@ -545,3 +558,15 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .signin-brand .mark { font-size: 2.11rem; line-height: 1; }
 .signin-brand .product-name { font-weight: 600; margin-left: 0.12em; } /* lighter than the R&F mark (900) */
 .signin-card .signin-form { max-width: none; padding: 32px 40px 40px; }
+
+/* ---------- sidebar header: brand band ---------- */
+/* The rail sits 36px down so the band's center lines up with the month title's center. */
+
+.rail { padding-top: 36px; }
+.rail-panel { overflow: hidden; }
+.brand { height: auto; flex-direction: column; align-items: stretch; gap: 0; padding-bottom: 20px; }
+.bh-band { display: flex; justify-content: center; margin: 0 -32px; padding: 16px 32px; background: rgba(118, 170, 255, 0.08); }
+.mark.wm { font-size: 1.45rem; line-height: 1; white-space: nowrap; }
+.wm-name { font-weight: 600; margin-left: 0.37em; }
+.bh-client { display: flex; flex-direction: column; gap: 5px; padding-top: 16px; }
+.client-switch { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; max-width: 100%; }

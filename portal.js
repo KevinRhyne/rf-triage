@@ -193,7 +193,7 @@ function setComposing(on) {
 // ---------- rail ----------
 
 function folder(id, name, num, pct, over) {
-  const track = !pct ? '' : `<span class="track"><i style="width:${pct}%"></i></span>`;
+  const track = !pct ? '' : `<span class="track"><i data-bar="track-${id}" style="width:${pct}%"></i></span>`;
   const droppable = id !== 'requests';
   return `
     <button class="folder ${view === id ? 'active' : ''} ${over ? 'over' : ''}" data-view="${id}" ${droppable ? 'data-droppable' : ''}>
@@ -202,19 +202,21 @@ function folder(id, name, num, pct, over) {
     </button>`;
 }
 
+// ---------- sidebar header ----------
+
+const wordmark = () => '<span class="mark wm">R&amp;F<span class="wm-name">Triage</span></span>';
+
 function rail() {
   const months = P.openMonths();
   const pending = P.state.requests.filter((r) => r.status === 'pending').length;
+  const clientHtml = P.state.clients.length > 1
+    ? `<select class="client-switch" data-client-switch>${P.state.clients.map((c) => `<option value="${c.id}" ${c.id === P.state.client.id ? 'selected' : ''}>${P.esc(c.name)}</option>`).join('')}</select>`
+    : P.esc(P.state.client.name);
   return `
     <nav class="rail"><div class="rail-panel">
       <div class="brand">
-        <span class="mark">R&amp;F</span>
-        <span class="brand-text">
-          ${P.state.clients.length > 1
-            ? `<select class="client client-switch" data-client-switch>${P.state.clients.map((c) => `<option value="${c.id}" ${c.id === P.state.client.id ? 'selected' : ''}>${P.esc(c.name)}</option>`).join('')}</select>`
-            : `<span class="client">${P.esc(P.state.client.name)}</span>`}
-          <span class="product">${P.esc(P.state.client.plan)}</span>
-        </span>
+        <div class="bh-band">${wordmark()}</div>
+        <div class="bh-client"><span class="client">${clientHtml}</span><span class="product">${P.esc(P.state.client.plan)}</span></div>
       </div>
       <div class="group first">
         ${months.map((m) => {
@@ -226,9 +228,11 @@ function rail() {
         ${folder('backlog', 'Backlog', P.state.backlog.length)}
         ${folder('requests', 'Requests', pending || '')}
       </div>
-      <div class="rail-foot">
-        <span>${P.esc(P.state.user.name)}${P.isAdmin() ? ' · Admin' : ''}</span>
-        <button type="button" class="btn-quiet" data-act="sign-out">Sign out</button>
+      <div class="rail-bottom">
+        <div class="rail-foot">
+          <span>${P.esc(P.state.user.name)}${P.isAdmin() ? ' · Admin' : ''}</span>
+          <button type="button" class="btn-quiet" data-act="sign-out">Sign out</button>
+        </div>
       </div>
     </div></nav>`;
 }
@@ -240,7 +244,7 @@ function capacityBar(m) {
   const pct = Math.min(100, (u / m.capacity) * 100);
   return `
     <div class="pb ${u > m.capacity ? 'is-over' : ''}">
-      <div class="pb-track"><span class="pb-fill" style="width:${pct}%"></span><span class="pb-label">${u} of ${m.capacity} points</span></div>
+      <div class="pb-track"><span class="pb-fill" data-bar="cap-${m.id}" style="width:${pct}%"></span><span class="pb-label">${u} of ${m.capacity} points</span></div>
     </div>`;
 }
 
@@ -296,6 +300,27 @@ function signInScreen() {
     </div>`;
 }
 
+// Progress bars are redrawn on every render; slide each one from its previous width.
+let rendered = false;
+function barWidths() {
+  const widths = {};
+  app.querySelectorAll('[data-bar]').forEach((el) => { widths[el.dataset.bar] = el.style.width; });
+  return widths;
+}
+function animateBars(prev) {
+  if (!rendered) { rendered = true; return; } // no animation on first paint
+  app.querySelectorAll('[data-bar]').forEach((el) => {
+    const to = el.style.width;
+    const from = prev[el.dataset.bar] ?? '0%';
+    if (from === to) return;
+    el.style.transition = 'none';
+    el.style.width = from;
+    el.offsetWidth; // commit the old width before animating
+    el.style.transition = '';
+    el.style.width = to;
+  });
+}
+
 function render() {
   if (!P.ready) {
     app.classList.add('signed-out');
@@ -306,7 +331,9 @@ function render() {
   app.classList.remove('signed-out');
   if (!view || (view !== 'backlog' && view !== 'requests' && !P.month(view))) view = P.openMonths()[0]?.id || 'backlog';
   const scroll = app.querySelector('.list-pane')?.scrollTop || 0;
+  const prevBars = barWidths();
   app.innerHTML = rail() + list();
+  animateBars(prevBars);
   const pane = app.querySelector('.list-pane');
   if (pane) pane.scrollTop = scroll;
 }
@@ -578,6 +605,9 @@ function setFolderTarget(folder) {
 
 function updateDrag(e) {
   moveGhost(e);
+  // Fade the floating card once it nears the sidebar so the drop targets stay visible.
+  const railEdge = app.querySelector('.rail-panel')?.getBoundingClientRect().right ?? 0;
+  drag.ghost.classList.toggle('near-rail', e.clientX < railEdge + 60);
   const hit = document.elementFromPoint(e.clientX, e.clientY);
   const folder = hit?.closest('[data-droppable]');
   setFolderTarget(folder && folder.dataset.view !== view ? folder : null);
