@@ -17,13 +17,7 @@ If changes don't show, hard refresh (Cmd+Shift+R). The simple server lets the br
 - **URL:** https://triage.rhyneandfriends.com
 - **Hosting:** GitHub Pages on the public repo `KevinRhyne/rf-triage`, which holds only this folder. DNS is a Squarespace CNAME `triage` to `kevinrhyne.github.io`.
 - **Data:** Supabase project `iriaufhlhlkrafjltaxo`. Setup and adding clients: `supabase/SETUP.md`.
-- **Source of truth:** this `triage/` folder on the `triage` branch of rafsite. To deploy changes, commit here, then from the repo root:
-
-```sh
-git subtree push --prefix=triage rf-triage main
-```
-
-(`rf-triage` is the git remote for the deploy repo.)
+- **Source of truth:** this `triage/` folder on the `triage` branch of rafsite. To deploy, commit here, then run `triage/deploy.sh`. It merges into the live repo rather than force-pushing, because GitHub sometimes adds its own commits there (e.g. when the custom domain is changed).
 
 ## Files
 
