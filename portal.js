@@ -43,6 +43,45 @@ function comment(c) {
 
 // ---------- items ----------
 
+const TRASH_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6.5 7l1 12.5h9L17.5 7"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>';
+
+// A small confirm card over a dimmed page. Resolves true on confirm, false on cancel,
+// Escape, or a click outside.
+function confirmDialog({ title, body, confirm }) {
+  return new Promise((resolve) => {
+    const prevFocus = document.activeElement;
+    const el = document.createElement('div');
+    el.className = 'p-dialog-backdrop';
+    el.innerHTML = `
+      <div class="p-dialog" role="alertdialog" aria-modal="true" aria-labelledby="p-dialog-title">
+        <h2 id="p-dialog-title">${P.esc(title)}</h2>
+        ${body ? `<p>${P.esc(body)}</p>` : ''}
+        <div class="p-dialog-actions">
+          <button type="button" class="btn-quiet" data-dialog="cancel">Cancel</button>
+          <button type="button" class="btn-sm delete confirm" data-dialog="ok">${P.esc(confirm)}</button>
+        </div>
+      </div>`;
+    const close = (ok) => {
+      document.removeEventListener('keydown', onKey, true);
+      el.classList.add('out');
+      setTimeout(() => el.remove(), 140);
+      prevFocus?.focus?.();
+      resolve(ok);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false); }
+    };
+    el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-dialog]');
+      if (b) return close(b.dataset.dialog === 'ok');
+      if (!e.target.closest('.p-dialog')) close(false);
+    });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(el);
+    el.querySelector('[data-dialog="ok"]').focus();
+  });
+}
+
 function itemExpansion(it) {
   const inMonth = !!P.monthOf(it.id);
   const controls = admin() ? `
@@ -50,6 +89,7 @@ function itemExpansion(it) {
       ${seg('type', it.id, ['Bug', 'Feature'], it.type)}
       ${pointsInput('points', it.id, it.points)}
       ${inMonth ? `<button type="button" class="chip-btn ${it.status === 'Shipped' ? 'on' : ''}" data-act="ship" data-id="${it.id}">&#10003; Shipped</button>` : ''}
+      <button type="button" class="icon-btn trash" data-act="delete-item" data-id="${it.id}" title="Delete ticket" aria-label="Delete ticket">${TRASH_ICON}</button>
     </section>` : '';
   return `
     <div class="p-expand"><div class="p-expand-inner">
@@ -449,6 +489,11 @@ function act(el) {
     case 'cancel-compose': return setComposing(false);
     case 'type': return P.updateItem(id, { type: val });
     case 'ship': return P.toggleShipped(id);
+    case 'delete-item': {
+      const it = P.item(id);
+      return confirmDialog({ title: 'Delete this ticket?', body: it.title, confirm: 'Delete' })
+        .then((ok) => { if (ok) { openId = null; P.deleteItem(id); } });
+    }
     case 'r-type': {
       const r = P.request(id);
       const d = { title: r.title, description: r.description, type: r.type, ...drafts[id], type: val };
