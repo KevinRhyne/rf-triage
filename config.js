@@ -4,4 +4,6 @@ window.TRIAGE_CONFIG = {
   supabaseKey: 'sb_publishable_2ofBxhMLHJyixR0OAtWwoA_7KkxwQdD',
   // Client codes become hidden login emails: <code>@<loginDomain>. Never used for mail.
   loginDomain: 'triage.rhyneandfriends.com',
+  // Short mark shown in a box beside the client name, keyed by client code.
+  clientBadges: { BLACKBOX: 'BHS' },
 };

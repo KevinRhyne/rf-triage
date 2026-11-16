@@ -127,6 +127,9 @@ button { font: inherit; color: inherit; }
 /* ---------- list ---------- */
 
 .list-pane { padding: 16px var(--pad-x) 96px 56px; overflow-y: auto; }
+/* No scroll anchoring: while dragging, the slot moving through the list would make the browser
+   undo the auto-scroll to keep the visible cards in place. */
+.list-pane { overflow-anchor: none; }
 .list-head {
   /* Same box as .brand (top padding 16px + this height), so both headers share a center line and divider */
   height: calc(var(--head-h) - 16px);
@@ -568,5 +571,47 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .bh-band { display: flex; justify-content: center; margin: 0 -32px; padding: 16px 32px; background: rgba(118, 170, 255, 0.08); }
 .mark.wm { font-size: 1.45rem; line-height: 1; white-space: nowrap; }
 .wm-name { font-weight: 600; margin-left: 0.37em; }
-.bh-client { display: flex; flex-direction: column; gap: 5px; padding-top: 16px; }
+.bh-client { display: flex; align-items: center; gap: 12px; padding-top: 24px; min-width: 0; }
+.bh-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.client-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(118, 170, 255, 0.08);
+  color: var(--color-accent);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.cap-input input { width: 4.5ch; }
 .client-switch { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; max-width: 100%; }
+
+/* ---------- loading skeleton ---------- */
+
+.sk {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.11) 50%, rgba(255, 255, 255, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+.sk-badge { width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0; }
+.sk-folder { pointer-events: none; }
+.sk-card { cursor: default; align-items: center; }
+.sk-tile { width: 56px; height: 56px; border-radius: 12px; }
+.sk-lines { display: flex; flex-direction: column; gap: 10px; }
+.list-head.month .title-row .sk { margin-bottom: 4px; }
+
+/* Skeleton crossfade: a fixed copy of the skeleton fades out over the real content fading in. */
+.sk-layer { position: fixed; z-index: 50; margin: 0; pointer-events: none; transition: opacity 320ms ease; }
+.sk-layer.out { opacity: 0; }
+.layout.fade-in { animation: fade-in 320ms ease both; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sk-layer, .layout.fade-in { transition: none; animation: none; } }

@@ -206,6 +206,13 @@ function folder(id, name, num, pct, over) {
 
 const wordmark = () => '<span class="mark wm">R&amp;F<span class="wm-name">Triage</span></span>';
 
+// Short client mark shown beside the client name, from config.js (clientBadges by client code).
+function clientBadge() {
+  const badges = (window.TRIAGE_CONFIG && window.TRIAGE_CONFIG.clientBadges) || {};
+  const text = badges[P.state.client.code];
+  return text ? `<span class="client-badge">${P.esc(text)}</span>` : '';
+}
+
 function rail() {
   const months = P.openMonths();
   const pending = P.state.requests.filter((r) => r.status === 'pending').length;
@@ -215,8 +222,7 @@ function rail() {
   return `
     <nav class="rail"><div class="rail-panel">
       <div class="brand">
-        <div class="bh-band">${wordmark()}</div>
-        <div class="bh-client"><span class="client">${clientHtml}</span><span class="product">${P.esc(P.state.client.plan)}</span></div>
+        <div class="bh-client">${clientBadge()}<div class="bh-text"><span class="client">${clientHtml}</span><span class="product">${P.esc(P.state.client.plan)}</span></div></div>
       </div>
       <div class="group first">
         ${months.map((m) => {
@@ -268,7 +274,7 @@ function list() {
   const head = isBacklog
     ? '<div class="list-head"><h1>Backlog</h1></div>'
     : `<div class="list-head month">
-        <div class="title-row"><h1>${m.label}</h1></div>
+        <div class="title-row"><h1>${m.label}</h1>${admin() ? `<label class="pts-input cap-input" title="Point limit for ${m.label}"><input type="number" min="1" step="1" inputmode="numeric" value="${m.capacity}" data-input="capacity" data-id="${m.id}"><span>pt limit</span></label>` : ''}</div>
         ${capacityBar(m)}
       </div>`;
   return `
@@ -280,6 +286,59 @@ function list() {
         ${items.map(card).join('') || `<p class="p-empty">${isBacklog ? 'Backlog is empty' : 'Drag items from the backlog onto this release'}</p>`}
       </div>
     </section>`;
+}
+
+// ---------- loading skeleton ----------
+// Same layout boxes as the real rail and list, with shimmering placeholders.
+
+function skeleton() {
+  const bar = (w, h = 12) => `<span class="sk" style="width:${w};height:${h}px"></span>`;
+  const folderSk = (w) => `<div class="folder sk-folder">${bar(w)}</div>`;
+  const cardSk = (w) => `
+    <div class="p-card sk-card">
+      <span class="sk sk-tile"></span>
+      <div class="sk-lines">${bar(w, 14)}${bar('92%')}${bar('64%')}</div>
+    </div>`;
+  return `
+    <nav class="rail" aria-hidden="true"><div class="rail-panel">
+      <div class="brand">
+        <div class="bh-client"><span class="sk sk-badge"></span><div class="bh-text">${bar('110px', 14)}${bar('84px', 10)}</div></div>
+      </div>
+      <div class="group first">${folderSk('70%')}${folderSk('62%')}${folderSk('74%')}</div>
+      <div class="group">${folderSk('48%')}${folderSk('52%')}</div>
+    </div></nav>
+    <section class="list-pane" aria-busy="true" aria-label="Loading">
+      <div class="list-head month">
+        <div class="title-row">${bar('180px', 26)}</div>
+        ${bar('100%', 24)}
+      </div>
+      <div class="head-rule"></div>
+      <div class="cards">${['58%', '44%', '66%', '50%', '38%', '60%'].map(cardSk).join('')}</div>
+    </section>`;
+}
+
+let skeletonOn = false;
+function showSkeleton() {
+  skeletonOn = true;
+  app.classList.remove('signed-out');
+  app.innerHTML = skeleton();
+}
+
+// Lift the skeleton into a fixed copy over the page, then fade it out while the real content fades in.
+function fadeOutSkeleton() {
+  skeletonOn = false;
+  const r = app.getBoundingClientRect();
+  const layer = document.createElement('div');
+  layer.className = 'layout sk-layer';
+  layer.setAttribute('aria-hidden', 'true');
+  Object.assign(layer.style, { top: `${r.top}px`, left: `${r.left}px`, width: `${r.width}px`, height: `${r.height}px` });
+  layer.innerHTML = app.innerHTML;
+  document.body.appendChild(layer);
+  return () => {
+    app.classList.add('fade-in');
+    requestAnimationFrame(() => layer.classList.add('out'));
+    setTimeout(() => { layer.remove(); app.classList.remove('fade-in'); }, 400);
+  };
 }
 
 // ---------- sign in ----------
@@ -322,6 +381,12 @@ function animateBars(prev) {
 }
 
 function render() {
+  const reveal = skeletonOn ? fadeOutSkeleton() : null;
+  draw();
+  if (reveal) reveal();
+}
+
+function draw() {
   if (!P.ready) {
     app.classList.add('signed-out');
     app.innerHTML = signInScreen();
@@ -440,6 +505,14 @@ app.addEventListener('change', (e) => {
   if (n > 0) P.updateItem(el.dataset.id, { points: n });
   else { el.value = P.item(el.dataset.id).points || ''; P.toast('Points must be a whole number above 0'); }
 });
+// Month point limit (admin): saves on change.
+app.addEventListener('change', (e) => {
+  const el = e.target.closest('[data-input="capacity"]');
+  if (!el) return;
+  const n = Math.round(Number(el.value));
+  if (n > 0) P.setCapacity(el.dataset.id, n);
+  else { el.value = P.month(el.dataset.id).capacity; P.toast('The point limit must be a whole number above 0'); }
+});
 app.addEventListener('input', (e) => {
   const el = e.target.closest('[data-input="t-points"]');
   if (!el) return;
@@ -480,7 +553,8 @@ app.addEventListener('change', (e) => {
   const sel = e.target.closest('[data-client-switch]');
   if (!sel) return;
   openId = null; composing = false; view = null;
-  P.switchClient(sel.value);
+  showSkeleton();
+  P.switchClient(sel.value).catch(() => {}).finally(render);
 });
 
 app.addEventListener('submit', async (e) => {
@@ -588,6 +662,7 @@ function startDrag(e) {
   d.list = d.el.parentNode;
   d.pane = d.list.closest('.list-pane');
   moveGhost(e);
+  requestAnimationFrame(autoScroll);
 }
 
 function moveGhost(e) {
@@ -604,6 +679,7 @@ function setFolderTarget(folder) {
 }
 
 function updateDrag(e) {
+  drag.y = e.clientY;
   moveGhost(e);
   // Fade the floating card once it nears the sidebar so the drop targets stay visible.
   const railEdge = app.querySelector('.rail-panel')?.getBoundingClientRect().right ?? 0;
@@ -613,19 +689,41 @@ function updateDrag(e) {
   setFolderTarget(folder && folder.dataset.view !== view ? folder : null);
   if (drag.folder) return;
 
-  // Reorder inside the visible list using layout positions (immune to running transforms).
+  reorder(e.clientY);
+}
+
+// Move the slot to where the pointer is, using layout positions (immune to running transforms).
+function reorder(y) {
   if (P.canMove(drag.id, view)) return;
   const listTop = drag.list.getBoundingClientRect().top;
   const others = cardEls(drag.list).filter((c) => c !== drag.el);
-  const idx = others.filter((c) => listTop + c.offsetTop + c.offsetHeight / 2 < e.clientY).length;
+  const idx = others.filter((c) => listTop + c.offsetTop + c.offsetHeight / 2 < y).length;
   const ref = others[idx] || null;
   if (drag.el.nextElementSibling === ref || (!ref && drag.el === drag.list.lastElementChild)) return;
   flip(drag.list, () => drag.list.insertBefore(drag.el, ref));
+}
 
-  // Auto-scroll near the edges of the list pane.
-  const pr = drag.pane.getBoundingClientRect();
-  if (e.clientY < pr.top + 60) drag.pane.scrollTop -= 12;
-  else if (e.clientY > pr.bottom - 60) drag.pane.scrollTop += 12;
+// While a card is held near the top or bottom of the list pane, keep scrolling, faster the
+// closer it is to the edge, and keep the slot under the pointer as the list moves.
+const EDGE_PX = 80;
+const MAX_SCROLL_PX = 22; // per frame
+function autoScroll() {
+  const d = drag;
+  if (!d || !d.active) return;
+  if (!d.folder && d.y != null) {
+    const pr = d.pane.getBoundingClientRect();
+    const top = Math.max(pr.top, 0);
+    const bottom = Math.min(pr.bottom, window.innerHeight);
+    let step = 0;
+    if (d.y < top + EDGE_PX) step = -MAX_SCROLL_PX * Math.min(1, (top + EDGE_PX - d.y) / EDGE_PX);
+    else if (d.y > bottom - EDGE_PX) step = MAX_SCROLL_PX * Math.min(1, (d.y - (bottom - EDGE_PX)) / EDGE_PX);
+    if (step) {
+      const before = d.pane.scrollTop;
+      d.pane.scrollTop += step;
+      if (d.pane.scrollTop !== before) reorder(d.y);
+    }
+  }
+  requestAnimationFrame(autoScroll);
 }
 
 function endDrag() {
@@ -691,5 +789,5 @@ window.addEventListener('click', (e) => {
 }, true);
 
 P.onChange(render);
-app.innerHTML = '';
+showSkeleton();
 P.init().finally(render);
