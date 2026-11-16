@@ -213,6 +213,8 @@ function clientBadge() {
   return text ? `<span class="client-badge">${P.esc(text)}</span>` : '';
 }
 
+const backlogPoints = () => P.backlog().reduce((sum, it) => sum + P.pts(it), 0);
+
 function rail() {
   const months = P.openMonths();
   const pending = P.state.requests.filter((r) => r.status === 'pending').length;
@@ -231,7 +233,7 @@ function rail() {
         }).join('')}
       </div>
       <div class="group">
-        ${folder('backlog', 'Backlog', P.state.backlog.length)}
+        ${folder('backlog', 'Backlog', backlogPoints())}
         ${folder('requests', 'Requests', pending || '')}
       </div>
       <div class="rail-bottom">
@@ -272,7 +274,7 @@ function list() {
   const m = isBacklog ? null : P.month(view);
   const items = isBacklog ? P.backlog() : P.monthItems(view);
   const head = isBacklog
-    ? '<div class="list-head"><h1>Backlog</h1></div>'
+    ? `<div class="list-head"><h1>Backlog</h1><span class="head-total">${backlogPoints()} points</span></div>`
     : `<div class="list-head month">
         <div class="title-row"><h1>${m.label}</h1>${admin() ? `<label class="pts-input cap-input" title="Point limit for ${m.label}"><input type="number" min="1" step="1" inputmode="numeric" value="${m.capacity}" data-input="capacity" data-id="${m.id}"><span>pt limit</span></label>` : ''}</div>
         ${capacityBar(m)}

@@ -152,6 +152,7 @@ button { font: inherit; color: inherit; }
   padding: var(--title-pad) 0;
 }
 .title-row { display: flex; align-items: center; justify-content: space-between; }
+.head-total { font-size: 0.8125rem; font-weight: 600; color: var(--quiet); font-variant-numeric: tabular-nums; }
 
 
 .pb { --fill: var(--color-accent); font-variant-numeric: tabular-nums; }
