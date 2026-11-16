@@ -74,7 +74,7 @@
     const s = {
       user: { name: savedName(), role: isAdmin ? 'admin' : 'client' },
       clients: isAdmin ? clients : [client],
-      client: { id: client.id, name: client.name, plan: client.plan, defaultCapacity: client.default_capacity },
+      client: { id: client.id, code: client.code, name: client.name, plan: client.plan, defaultCapacity: client.default_capacity },
       months: months.data.map((m) => ({
         id: m.id,
         label: monthLabel(m.starts_on, { month: 'long' }),
@@ -300,6 +300,16 @@
     return it;
   }
 
+  // Kevin changing one month's point limit.
+  function setCapacity(id, capacity) {
+    const m = month(id);
+    if (m.capacity === capacity) return;
+    m.capacity = capacity;
+    changed();
+    write(sb.from('months').update({ capacity }).eq('id', id));
+    log(`set ${m.label} to ${capacity} points`);
+  }
+
   function toggleShipped(id) {
     const it = item(id);
     updateItem(id, { status: it.status === 'Shipped' ? 'Planned' : 'Shipped' });
@@ -337,7 +347,7 @@
     item, pts, month, openMonths, monthItems, backlog, used, left, monthOf, where,
     canMove, move, comment,
     request, addRequest, updateRequest, acceptRequest, declineRequest, deleteRequest, commentRequest,
-    addItem, updateItem, toggleShipped, isAdmin,
+    addItem, updateItem, setCapacity, toggleShipped, isAdmin,
     esc, fmtDate, toast,
     onChange: (fn) => listeners.push(fn),
   };
