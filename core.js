@@ -310,6 +310,18 @@
     log(`set ${m.label} to ${capacity} points`);
   }
 
+  // Kevin deleting a ticket. Its comments go with it (cascade).
+  function deleteItem(id) {
+    const it = item(id);
+    if (!it) return;
+    state.items = state.items.filter((x) => x.id !== id);
+    state.backlog = state.backlog.filter((x) => x !== id);
+    for (const m of state.months) m.order = m.order.filter((x) => x !== id);
+    changed();
+    write(sb.from('items').delete().eq('id', id));
+    log(`deleted "${it.title}"`);
+  }
+
   function toggleShipped(id) {
     const it = item(id);
     updateItem(id, { status: it.status === 'Shipped' ? 'Planned' : 'Shipped' });
@@ -347,7 +359,7 @@
     item, pts, month, openMonths, monthItems, backlog, used, left, monthOf, where,
     canMove, move, comment,
     request, addRequest, updateRequest, acceptRequest, declineRequest, deleteRequest, commentRequest,
-    addItem, updateItem, setCapacity, toggleShipped, isAdmin,
+    addItem, updateItem, setCapacity, deleteItem, toggleShipped, isAdmin,
     esc, fmtDate, toast,
     onChange: (fn) => listeners.push(fn),
   };
